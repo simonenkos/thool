@@ -24,13 +24,10 @@ class thread_pool
    friend thread_pool * instance();
 
 public:
-   typedef std::vector<boost::thread> thread_list;
-   typedef std::vector<task_queue>    task_queue_list;
+   typedef std::vector<thread_ptr> thread_list;
 
 private:
-   thread_list     thread_list_;
-   task_queue_list task_queue_list_;
-   unsigned        task_queue_size_;
+   thread_list thread_list_;
 
    thread_pool();
    thread_pool(const thread_pool & pool);
@@ -54,10 +51,6 @@ public:
 
    /** Interrupt work of the thread pool without waiting for all tasks are finished. */
    void forced_stop();
-
-private:
-
-
 };
 
 } /* namespace thool */

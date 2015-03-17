@@ -15,12 +15,18 @@ namespace
    const unsigned DEFAULT_TASK_QUEUE_SIZE = 10;
 }
 
-thread_pool::thread_pool() : task_queue_size_(DEFAULT_TASK_QUEUE_SIZE)
+thread_pool::thread_pool()
 {
-   unsigned default_thread_count = boost::thread::hardware_concurrency();
+//   unsigned default_thread_count = boost::thread::hardware_concurrency();
+//
+//   task_queue_list_.resize(default_thread_count, task_queue(task_queue_size_));
+//
+//   for (unsigned counter = 0; counter < default_thread_count; counter++)
+//   {
+//      thread_list_.push_back(boost::thread(&thread_pool::process_tasks, this, counter));
+//   }
 
-       thread_list_.resize(default_thread_count);
-   task_queue_list_.resize(default_thread_count, task_queue(task_queue_size_));
+   // ToDo think about 'thread' class that holds thread and queue.
 };
 
 thread_pool::~thread_pool()
@@ -30,6 +36,8 @@ thread_pool::~thread_pool()
 
 /**
  * Add a task with specified priority for execution at the thread pool.
+ * Return 'true' if task was successfully added to thread's task queue,
+ * otherwise 'false'.
  */
 bool thread_pool::add_task(const task & task)
 {
@@ -60,7 +68,6 @@ void thread_pool::stop()
 {
    // ToDo
 };
-
 
 /**
  * Interrupt work of the thread pool without waiting for all tasks are finished.
