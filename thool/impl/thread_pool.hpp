@@ -28,6 +28,7 @@ public:
 
 private:
    thread_list thread_list_;
+   unsigned available_thread_number_;
 
    thread_pool();
    thread_pool(const thread_pool & pool);
@@ -38,13 +39,13 @@ private:
 public:
 
    /** Add a task with specified priority for execution at the thread pool. */
-   bool add_task(const task & task);
+   bool add_task(const task & tsk);
 
    /** Change size of a threads at the thread pool. */
    void change_size(unsigned new_size);
 
    /** Set maximum amount of tasks per thread. */
-   void set_max_task_count();
+   void set_max_task_count(unsigned new_count);
 
    /** Interrupt work of the thread pool with waiting for all tasks are finished. */
    void stop();

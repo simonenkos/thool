@@ -16,7 +16,7 @@ namespace thool
 /**
  * Simple structure that presents a task for the thread pool. It takes a function for
  * execution and it's priority value, which allows to process the task according to
- * a client's requirements.
+ * a client's requirements. Higher priority value means higher priority for a task.
  */
 struct task
 {
@@ -31,6 +31,7 @@ struct task
                                                   , priority_(priority)
    { }
 
+   // Compare method for priority queue.
    bool operator<(const task & other) const
    {
       return priority_ < other.priority_;

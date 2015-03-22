@@ -19,16 +19,30 @@ thread::~thread()
    if (thread_.joinable()) thread_.join();
 };
 
-bool thread::add_task(const task & tsk)
+/**
+ * Method to add new task for the thread to process.
+ */
+bool thread::add_task(const task & tsk, bool wait)
 {
+   if (wait)
+   {
+      queue_.wait_and_push(tsk);
+      return true;
+   }
    return queue_.push(tsk);
 };
 
-bool thread::steal_task(task & tsk)
+/**
+ * Method to get a task that waiting to be processed from the thread.
+ */
+bool thread::get_task(task & tsk)
 {
    return queue_.try_pop(tsk);
 };
 
+/**
+ * Method to stop the thread.
+ */
 void thread::stop(bool forced)
 {
    if (forced)
@@ -39,7 +53,15 @@ void thread::stop(bool forced)
    {
       thread_.join();
    }
-}
+};
+
+/**
+ * Method to resize thread's task queue.
+ */
+void thread::resize_queue(unsigned new_size)
+{
+   queue_.resize(new_size);
+};
 
 void thread::run()
 {
