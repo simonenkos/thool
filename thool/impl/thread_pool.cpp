@@ -19,6 +19,7 @@ thread_pool::thread_pool() : available_thread_number_(0)
 {
    thread_list_.resize(boost::thread::hardware_concurrency());
 
+   // Create threads with default parameters.
    for (int index = 0; index < thread_list_.size(); index++)
    {
       thread_list_[index] = std::make_shared<thread>(DEFAULT_TASK_QUEUE_SIZE);
@@ -38,19 +39,17 @@ bool thread_pool::add_task(const task & tsk)
    if (thread_list_.empty())
       return false;
 
-   // Tying to add task to first thread that available for adding.
-   if (thread_list_[available_thread_number_]->add_task(tsk))
-      return true;
-
-   // If it is not possible, go over other threads and look for someone
-   // who will take the task.
+   // Go over other threads and look for someone who will take the task,
+   // starting with first thread that is marked as available for adding.
    unsigned number = available_thread_number_;
 
    do
    {
+      bool result = thread_list_[number]->add_task(tsk);
+
       number = (number == thread_list_.size()) ? 0
-                                                 : number + 1;
-      if (thread_list_[number]->add_task(tsk))
+                                               : number + 1;
+      if (result)
       {
          available_thread_number_ = number;
          return true;
@@ -68,7 +67,49 @@ bool thread_pool::add_task(const task & tsk)
  */
 void thread_pool::change_size(unsigned new_size)
 {
-   // ToDo
+   unsigned old_size = thread_list_.size();
+
+   if (new_size > old_size)
+   {
+      thread_list_.resize(new_size);
+   }
+   else if (new_size < old_size)
+   {
+      // Create a temporary list of threads that should be deleted.
+      thread_list threads_to_delete(old_size - new_size);
+
+      // Save removable threads for later processing into the
+      // temporary list.
+      while (new_size != old_size)
+      {
+         threads_to_delete.push_back
+         (
+               thread_list_[old_size - 1]
+         );
+         old_size--;
+      }
+
+      // Resize thread list to new size.
+      thread_list_.resize(new_size);
+
+      task task_to_move;
+      thread_ptr ptr;
+
+      // Move tasks from removable threads to other threads, stop
+      // an empty thread and remove it from the temporary list.
+      while (!threads_to_delete.empty())
+      {
+         ptr = threads_to_delete.front();
+
+         while (ptr->get_task(task_to_move))
+         {
+            add_task(task_to_move);
+         }
+         ptr->stop();
+
+         threads_to_delete.erase(threads_to_delete.begin());
+      }
+   }
 };
 
 /**

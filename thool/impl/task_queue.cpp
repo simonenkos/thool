@@ -25,9 +25,9 @@ void task_queue::wait_and_push(const task & tsk)
 };
 
 /**
- * Method allows to add tasks to the queue.
+ * Method allows to add tasks to the queue without waiting.
  */
-bool task_queue::push(const task & tsk)
+bool task_queue::try_push(const task & tsk)
 {
    boost::lock_guard<boost::mutex> lock(mutex_);
    if (queue_.size() == size_)

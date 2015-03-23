@@ -29,7 +29,7 @@ bool thread::add_task(const task & tsk, bool wait)
       queue_.wait_and_push(tsk);
       return true;
    }
-   return queue_.push(tsk);
+   return queue_.try_push(tsk);
 };
 
 /**
