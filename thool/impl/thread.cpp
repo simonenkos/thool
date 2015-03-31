@@ -5,6 +5,7 @@
  *      Author: simonenkos
  */
 
+#include <thool/thool.hpp>
 #include <thool/impl/thread.hpp>
 
 namespace thool
@@ -22,22 +23,22 @@ thread::~thread()
 /**
  * Method to add new task for the thread to process.
  */
-bool thread::add_task(const task & tsk, bool wait)
+bool thread::add_task(const task_ptr & new_task_ptr, bool wait)
 {
    if (wait)
    {
-      queue_.wait_and_push(tsk);
+      queue_.wait_and_push(new_task_ptr);
       return true;
    }
-   return queue_.try_push(tsk);
+   return queue_.try_push(new_task_ptr);
 };
 
 /**
  * Method to get a task that waiting to be processed from the thread.
  */
-bool thread::get_task(task & tsk)
+task_ptr thread::get_task()
 {
-   return queue_.try_pop(tsk);
+   return queue_.try_pop();
 };
 
 /**
@@ -67,9 +68,12 @@ void thread::run()
 {
    while (thread_.joinable())
    {
-      task active_task;
-      queue_.wait_and_pop(active_task);
-      active_task.function_();
+      // Trying to steal task from another threads.
+      task_ptr active_task_ptr = thool::instance().steal_task();
+      // If there are no free tasks, trying to get task from thread's task queue.
+      if (!active_task_ptr) active_task_ptr = queue_.wait_and_pop();
+      // Execute task.
+      active_task_ptr->execute();
    }
 };
 

@@ -25,7 +25,7 @@ namespace thool
  */
 class task_queue
 {
-   typedef std::priority_queue<task> internal_queue;
+   typedef std::priority_queue<task_ptr> internal_queue;
 
    mutable boost::mutex mutex_;          // Mutex to synchronize access to the queue.
    boost::condition_variable not_empty_; // Condition variable to wait for a new task at the queue.
@@ -42,16 +42,16 @@ private:
 
 public:
    /** Method allows to add tasks to the queue with waiting if there is no free space. */
-   void wait_and_push(const task & tsk);
+   void wait_and_push(const task_ptr & new_task_ptr);
 
    /** Method allows to add tasks to the queue without waiting. */
-   bool try_push(const task & tsk);
+   bool try_push(const task_ptr & new_task_ptr);
 
    /** Method tries to get an element from the queue. It will be blocked when no data is available. */
-   void wait_and_pop(task & tsk);
+   task_ptr wait_and_pop();
 
    /** Method tries to get an element from the queue without blocking, */
-   bool try_pop(task & tsk);
+   task_ptr try_pop();
 
    /** Method checks is the queue empty or not. */
    bool is_empty() const;

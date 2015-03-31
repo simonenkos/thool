@@ -9,7 +9,7 @@
 
 #include <thool/thool.hpp>
 
-unsigned simple_fibonnachi(unsigned n)
+unsigned long long simple_fibonnachi(unsigned n)
 {
    if (n == 0) return 0;
    if (n == 1) return 1;
@@ -24,7 +24,17 @@ void calculate_simple_fibonachi()
 
 int main(int argc, char ** argv)
 {
-   thool::instance().add_task(thool::task(&calculate_simple_fibonachi, 0));
+   thool::task_ptr fst_fib_task_ptr = boost::make_shared<thool::task>(&calculate_simple_fibonachi, 4);
+
+   thool::instance().add_task(fst_fib_task_ptr);
+
+   while (true)
+   {
+      if (fst_fib_task_ptr->is_completed())
+      {
+         break;
+      }
+   }
 
    return 0;
 };

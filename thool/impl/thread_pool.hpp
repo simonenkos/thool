@@ -10,6 +10,7 @@
 
 #include <boost/thread.hpp>
 
+#include <thool/impl/thread.hpp>
 #include <thool/impl/task_queue.hpp>
 
 namespace thool
@@ -22,13 +23,13 @@ namespace thool
 class thread_pool
 {
    friend thread_pool * instance();
+   friend class thread;
 
-public:
    typedef std::vector<thread_ptr> thread_list;
 
-private:
    thread_list thread_list_;
    unsigned available_thread_number_;
+   unsigned task_queue_size_;
 
    thread_pool();
    thread_pool(const thread_pool & pool);
@@ -36,16 +37,19 @@ private:
 
    ~thread_pool();
 
+   /** Get free task from thread pool to process by another thread. */
+   task_ptr steal_task();
+
 public:
 
    /** Add a task with specified priority for execution at the thread pool. */
-   bool add_task(const task & tsk);
+   void add_task(const task_ptr & new_task_ptr);
 
    /** Change size of a threads at the thread pool. */
-   void change_size(unsigned new_size);
+   bool change_size(unsigned new_size);
 
    /** Set maximum amount of tasks per thread. */
-   void set_max_task_count(unsigned new_count);
+   bool set_max_task_count(unsigned new_count);
 
    /** Interrupt work of the thread pool with waiting for all tasks are finished. */
    void stop();

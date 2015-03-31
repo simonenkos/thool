@@ -16,23 +16,23 @@ task_queue::task_queue(unsigned size) : size_(size)
 /**
  * Method allows to add tasks to the queue with waiting if there is no free space.
  */
-void task_queue::wait_and_push(const task & tsk)
+void task_queue::wait_and_push(const task_ptr & new_task_ptr)
 {
    boost::unique_lock<boost::mutex> lock(mutex_);
    not_full_.wait(lock, boost::bind(&task_queue::is_not_full, this, _1));
-   queue_.push(tsk);
+   queue_.push(new_task_ptr);
    not_empty_.notify_all();
 };
 
 /**
  * Method allows to add tasks to the queue without waiting.
  */
-bool task_queue::try_push(const task & tsk)
+bool task_queue::try_push(const task_ptr & new_task_ptr)
 {
-   boost::lock_guard<boost::mutex> lock(mutex_);
-   if (queue_.size() == size_)
+   boost::unique_lock<boost::mutex> lock(mutex_, boost::try_to_lock);
+   if (!lock || (queue_.size() == size_))
       return false;
-   queue_.push(tsk);
+   queue_.push(new_task_ptr);
    not_empty_.notify_all();
    return true;
 };
@@ -40,27 +40,30 @@ bool task_queue::try_push(const task & tsk)
 /**
  * Method tries to get an element from the queue. It will be blocked when no data is available.
  */
-void task_queue::wait_and_pop(task & tsk)
+task_ptr task_queue::wait_and_pop()
 {
    boost::unique_lock<boost::mutex> lock(mutex_);
    not_empty_.wait(lock, boost::bind(&task_queue::is_not_empty, this, _1));
-   tsk = queue_.top();
+   task_ptr top_task_ptr = queue_.top();
    queue_.pop();
    not_full_.notify_all();
+   return top_task_ptr;
 };
 
 /**
  * Method tries to get an element from the queue without blocking,
  */
-bool task_queue::try_pop(task & tsk)
+task_ptr task_queue::try_pop()
 {
-   boost::lock_guard<boost::mutex> lock(mutex_);
-   if (queue_.empty())
-      return false;
-   tsk = queue_.top;
-   queue_.pop();
-   not_full_.notify_all();
-   return true;
+   task_ptr top_task_ptr;
+   boost::unique_lock<boost::mutex> lock(mutex_, boost::try_to_lock);
+   if (lock && !queue_.empty())
+   {
+      top_task_ptr = queue_.top;
+      queue_.pop();
+      not_full_.notify_all();
+   }
+   return top_task_ptr;
 };
 
 /**

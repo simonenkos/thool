@@ -22,18 +22,18 @@ namespace thool
  */
 class thread
 {
-   task_queue queue_;     // Queue to store tasks for the thread according to their priority.
-   boost::thread thread_; // Boost's thread to process tasks at a separate thread.
+   task_queue queue_;       // Queue to store tasks for the thread according to their priority.
+   boost::thread thread_;   // Boost's thread to process tasks at a separate thread.
 
 public:
    thread(unsigned task_queue_size);
    ~thread();
 
    /** Method to add new task for the thread to process. */
-   bool add_task(const task & tsk, bool wait = false);
+   bool add_task(const task_ptr & new_task_ptr, bool wait = false);
 
    /** Method to get a task that waiting to be processed from the thread. */
-   bool get_task(task & tsk);
+   task_ptr get_task();
 
    /** Method to stop the thread. */
    void stop(bool forced = false);
