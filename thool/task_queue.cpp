@@ -5,7 +5,7 @@
  *      Author: simonenkos
  */
 
-#include <thool/impl/task_queue.hpp>
+#include <thool/task_queue.hpp>
 
 namespace thool
 {
@@ -18,10 +18,11 @@ task_queue::task_queue(unsigned size) : size_(size)
  */
 void task_queue::wait_and_push(const task_ptr & new_task_ptr)
 {
-   boost::unique_lock<boost::mutex> lock(mutex_);
-   not_full_.wait(lock, boost::bind(&task_queue::is_not_full, this, _1));
+   std::unique_lock<std::mutex> lock(mutex_);
+   // If queue is full, wait for free space.
+   free_space_.wait(lock, [this](){ return queue_.size() < size_; });
    queue_.push(new_task_ptr);
-   not_empty_.notify_all();
+   new_task_.notify_one();
 };
 
 /**
@@ -29,11 +30,11 @@ void task_queue::wait_and_push(const task_ptr & new_task_ptr)
  */
 bool task_queue::try_push(const task_ptr & new_task_ptr)
 {
-   boost::unique_lock<boost::mutex> lock(mutex_, boost::try_to_lock);
+   std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
    if (!lock || (queue_.size() == size_))
       return false;
    queue_.push(new_task_ptr);
-   not_empty_.notify_all();
+   new_task_.notify_one();
    return true;
 };
 
@@ -42,11 +43,12 @@ bool task_queue::try_push(const task_ptr & new_task_ptr)
  */
 task_ptr task_queue::wait_and_pop()
 {
-   boost::unique_lock<boost::mutex> lock(mutex_);
-   not_empty_.wait(lock, boost::bind(&task_queue::is_not_empty, this, _1));
+   std::unique_lock<std::mutex> lock(mutex_);
+   // If queue is empty, wait for new task.
+   new_task_.wait(lock, [this](){ return !queue_.empty(); });
    task_ptr top_task_ptr = queue_.top();
    queue_.pop();
-   not_full_.notify_all();
+   free_space_.notify_one();
    return top_task_ptr;
 };
 
@@ -56,12 +58,12 @@ task_ptr task_queue::wait_and_pop()
 task_ptr task_queue::try_pop()
 {
    task_ptr top_task_ptr;
-   boost::unique_lock<boost::mutex> lock(mutex_, boost::try_to_lock);
+   std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
    if (lock && !queue_.empty())
    {
-      top_task_ptr = queue_.top;
+      top_task_ptr = queue_.top();
       queue_.pop();
-      not_full_.notify_all();
+      free_space_.notify_one();
    }
    return top_task_ptr;
 };
@@ -71,7 +73,7 @@ task_ptr task_queue::try_pop()
  */
 bool task_queue::is_empty() const
 {
-   boost::lock_guard<boost::mutex> lock(mutex_);
+   std::lock_guard<std::mutex> lock(mutex_);
    return queue_.empty();
 };
 
@@ -80,18 +82,8 @@ bool task_queue::is_empty() const
  */
 void task_queue::resize(unsigned new_size)
 {
-   boost::lock_guard<boost::mutex> lock(mutex_);
+   std::lock_guard<std::mutex> lock(mutex_);
    size_ = new_size;
-};
-
-bool task_queue::is_not_empty() const
-{
-   return !queue_.empty();
-};
-
-bool task_queue::is_not_full() const
-{
-   return queue_.size() < size_;
 };
 
 } /* namespace thool */

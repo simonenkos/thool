@@ -5,14 +5,14 @@
  *      Author: simonenkos
  */
 
-#ifndef THOOL_IMPL_TASK_QUEUE_HPP_
-#define THOOL_IMPL_TASK_QUEUE_HPP_
+#ifndef THOOL_TASK_QUEUE_HPP_
+#define THOOL_TASK_QUEUE_HPP_
 
+#include <thool/task.hpp>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
 
-#include <boost/thread.hpp>
-
-#include <thool/impl/task.hpp>
 
 namespace thool
 {
@@ -27,18 +27,20 @@ class task_queue
 {
    typedef std::priority_queue<task_ptr> internal_queue;
 
-   mutable boost::mutex mutex_;          // Mutex to synchronize access to the queue.
-   boost::condition_variable not_empty_; // Condition variable to wait for a new task at the queue.
-   boost::condition_variable not_full_;  // Condition variable to wait for free space at the queue.
-   internal_queue queue_;                // Use STL's priority queue as a internal container.
-   unsigned size_;                       // Maximum size of the queue.
+   mutable std::mutex mutex_;           // Mutex to synchronize access to the queue.
+   std::condition_variable new_task_;   // Condition variable to wait for a new task at the queue.
+   std::condition_variable free_space_; // Condition variable to wait for free space at the queue.
+   internal_queue queue_;               // Use STL's priority queue as a internal container.
+   unsigned size_;                      // Maximum size of the queue.
 
 public:
    task_queue(unsigned size);
 
-private:
-   task_queue(const task_queue & other);
-   task_queue & operator=(const task_queue & other);
+   task_queue(const task_queue &  other) = delete;
+   task_queue(const task_queue && other) = delete;
+
+   task_queue & operator=(const task_queue &  other) = delete;
+   task_queue & operator=(const task_queue && other) = delete;
 
 public:
    /** Method allows to add tasks to the queue with waiting if there is no free space. */
@@ -58,12 +60,8 @@ public:
 
    /** Method allows to change size of the queue. */
    void resize(unsigned new_size);
-
-private:
-   bool is_not_empty() const;
-   bool is_not_full() const;
 };
 
 } /* namespace thool */
 
-#endif /* THOOL_IMPL_TASK_QUEUE_HPP_ */
+#endif /* THOOL_TASK_QUEUE_HPP_ */

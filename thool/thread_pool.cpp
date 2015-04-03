@@ -5,7 +5,7 @@
  *      Author: simonenkos
  */
 
-#include <thool/impl/thread_pool.hpp>
+#include <thool/thread_pool.hpp>
 
 namespace thool
 {
@@ -18,12 +18,12 @@ namespace
 thread_pool::thread_pool() : available_thread_number_(0)
                            , task_queue_size_(DEFAULT_TASK_QUEUE_SIZE)
 {
-   change_size(boost::thread::hardware_concurrency());
+   change_size(std::thread::hardware_concurrency());
 };
 
 thread_pool::~thread_pool()
 {
-   forced_stop();
+   stop();
 };
 
 /**
@@ -43,7 +43,7 @@ task_ptr thread_pool::steal_task()
 /**
  * Add a task with specified priority for execution at the thread pool.
  */
-void thread_pool::add_task(const task_ptr & new_task_ptr)
+void thread_pool::add_task(task_ptr new_task_ptr)
 {
    // Go over other threads and look for someone who will take the task,
    // starting with first thread that is marked as available for adding.
@@ -87,7 +87,7 @@ bool thread_pool::change_size(unsigned new_size)
       // Add new threads.
       for (unsigned index = old_size; index < new_size; index++)
       {
-         thread_list_[index] = boost::make_shared<thread>(task_queue_size_);
+         thread_list_[index] = std::make_shared<thread>(task_queue_size_);
       }
    }
    else if (new_size < old_size)
@@ -139,7 +139,7 @@ bool thread_pool::set_max_task_count(unsigned new_count)
 
    task_queue_size_ = new_count;
 
-   for (int index = 0; index < thread_list_.size(); index++)
+   for (unsigned index = 0; index < thread_list_.size(); index++)
    {
       thread_list_[index]->resize_queue(task_queue_size_);
    }
@@ -151,21 +151,19 @@ bool thread_pool::set_max_task_count(unsigned new_count)
  */
 void thread_pool::stop()
 {
-   for (int index = 0; index < thread_list_.size(); index++)
+   for (unsigned index = 0; index < thread_list_.size(); index++)
    {
-      thread_list_[index]->stop(false);
+      thread_list_[index]->stop();
    }
 };
 
 /**
- * Interrupt work of the thread pool without waiting for all tasks are finished.
+ * Method allows to get an instance of the thread pool in a thread-safe manner.
  */
-void thread_pool::forced_stop()
+thread_pool & thread_pool::instance()
 {
-   for (int index = 0; index < thread_list_.size(); index++)
-   {
-      thread_list_[index]->stop(true);
-   }
+   static thread_pool pool;
+   return pool;
 };
 
 } /* namespace thool */

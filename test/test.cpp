@@ -5,9 +5,10 @@
  *      Author: simonenkos
  */
 
-#include <boost/bind.hpp>
+#include <memory>
+#include <iostream>
 
-#include <thool/thool.hpp>
+#include <thool/thread_pool.hpp>
 
 unsigned long long simple_fibonnachi(unsigned n)
 {
@@ -24,17 +25,20 @@ void calculate_simple_fibonachi()
 
 int main(int argc, char ** argv)
 {
-   thool::task_ptr fst_fib_task_ptr = boost::make_shared<thool::task>(&calculate_simple_fibonachi, 4);
+   auto & thread_pool = thool::thread_pool::instance();
+   auto fib_task_ptr = std::make_shared<thool::task>(&calculate_simple_fibonachi, 4);
 
-   thool::instance().add_task(fst_fib_task_ptr);
+   thread_pool.add_task(fib_task_ptr);
 
    while (true)
    {
-      if (fst_fib_task_ptr->is_completed())
+      if (fib_task_ptr->is_completed())
       {
          break;
       }
    }
+
+   thread_pool.stop();
 
    return 0;
 };

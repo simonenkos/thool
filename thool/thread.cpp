@@ -5,8 +5,10 @@
  *      Author: simonenkos
  */
 
-#include <thool/thool.hpp>
-#include <thool/impl/thread.hpp>
+#include <iostream>
+
+#include <thool/thread_pool.hpp>
+#include <thool/thread.hpp>
 
 namespace thool
 {
@@ -17,7 +19,7 @@ thread::thread(unsigned task_queue_size) : queue_(task_queue_size)
 
 thread::~thread()
 {
-   if (thread_.joinable()) thread_.join();
+   stop();
 };
 
 /**
@@ -44,16 +46,9 @@ task_ptr thread::get_task()
 /**
  * Method to stop the thread.
  */
-void thread::stop(bool forced)
+void thread::stop()
 {
-   if (forced)
-   {
-      thread_.interrupt();
-   }
-   else if (thread_.joinable())
-   {
-      thread_.join();
-   }
+   if (thread_.joinable()) thread_.join();
 };
 
 /**
@@ -69,7 +64,7 @@ void thread::run()
    while (thread_.joinable())
    {
       // Trying to steal task from another threads.
-      task_ptr active_task_ptr = thool::instance().steal_task();
+      auto active_task_ptr = thread_pool::instance().steal_task();
       // If there are no free tasks, trying to get task from thread's task queue.
       if (!active_task_ptr) active_task_ptr = queue_.wait_and_pop();
       // Execute task.

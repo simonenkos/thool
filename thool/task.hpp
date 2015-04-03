@@ -5,10 +5,12 @@
  *      Author: simonenkos
  */
 
-#ifndef THOOL_IMPL_TASK_HPP_
-#define THOOL_IMPL_TASK_HPP_
+#ifndef THOOL_TASK_HPP_
+#define THOOL_TASK_HPP_
 
-#include <boost/function.hpp>
+#include <atomic>
+#include <functional>
+#include <memory>
 
 namespace thool
 {
@@ -20,10 +22,10 @@ namespace thool
  */
 class task
 {
-   // Use boost's function wrapper for a void function without parameters
+   // Use function wrapper for a void function without parameters
    // as a function for the task.
-   typedef boost::function<void()> function;
-   typedef boost::atomic<bool> flag;
+   typedef std::function<void()> function;
+   typedef std::atomic<bool> flag;
 
    function function_;
    unsigned priority_;
@@ -39,7 +41,7 @@ public:
    {
       function_();
       is_completed_ = true;
-   };
+   }
 
    bool is_completed() const
    {
@@ -53,8 +55,8 @@ public:
    }
 };
 
-typedef boost::shared_ptr<task> task_ptr;
+typedef std::shared_ptr<task> task_ptr;
 
 } /* namespace thool */
 
-#endif /* THOOL_IMPL_TASK_HPP_ */
+#endif /* THOOL_TASK_HPP_ */

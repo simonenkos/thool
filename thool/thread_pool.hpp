@@ -5,13 +5,11 @@
  *      Author: simonenkos
  */
 
-#ifndef THOOL_IMPL_THREAD_POOL_HPP_
-#define THOOL_IMPL_THREAD_POOL_HPP_
+#ifndef THOOL_THREAD_POOL_HPP_
+#define THOOL_THREAD_POOL_HPP_
 
-#include <boost/thread.hpp>
-
-#include <thool/impl/thread.hpp>
-#include <thool/impl/task_queue.hpp>
+#include <thool/task_queue.hpp>
+#include <thool/thread.hpp>
 
 namespace thool
 {
@@ -22,7 +20,6 @@ namespace thool
  */
 class thread_pool
 {
-   friend thread_pool * instance();
    friend class thread;
 
    typedef std::vector<thread_ptr> thread_list;
@@ -32,8 +29,12 @@ class thread_pool
    unsigned task_queue_size_;
 
    thread_pool();
-   thread_pool(const thread_pool & pool);
-   thread_pool & operator=(const thread_pool & pool);
+
+   thread_pool(const thread_pool &  pool) = delete;
+   thread_pool(const thread_pool && pool) = delete;
+
+   thread_pool & operator=(const thread_pool &  pool) = delete;
+   thread_pool & operator=(const thread_pool && pool) = delete;
 
    ~thread_pool();
 
@@ -43,7 +44,7 @@ class thread_pool
 public:
 
    /** Add a task with specified priority for execution at the thread pool. */
-   void add_task(const task_ptr & new_task_ptr);
+   void add_task(task_ptr new_task_ptr);
 
    /** Change size of a threads at the thread pool. */
    bool change_size(unsigned new_size);
@@ -51,13 +52,13 @@ public:
    /** Set maximum amount of tasks per thread. */
    bool set_max_task_count(unsigned new_count);
 
-   /** Interrupt work of the thread pool with waiting for all tasks are finished. */
+   /** Interrupt a work of the thread pool with waiting for all tasks to be finished. */
    void stop();
 
-   /** Interrupt work of the thread pool without waiting for all tasks are finished. */
-   void forced_stop();
+   /** Method allows to get an instance of the thread pool. */
+   static thread_pool & instance();
 };
 
 } /* namespace thool */
 
-#endif /* THOOL_IMPL_THREAD_POOL_HPP_ */
+#endif /* THOOL_THREAD_POOL_HPP_ */
