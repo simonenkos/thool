@@ -10,13 +10,7 @@
 namespace thool
 {
 
-namespace
-{
-   const unsigned DEFAULT_TASK_QUEUE_SIZE = 10;
-}
-
 thread_pool::thread_pool() : available_thread_number_(0)
-                           , task_queue_size_(DEFAULT_TASK_QUEUE_SIZE)
 {
    change_size(std::thread::hardware_concurrency());
 };
@@ -27,11 +21,13 @@ thread_pool::~thread_pool()
 };
 
 /**
- * Get free task from thread pool to process by another thread.
+ * Get free task from some thread to process by another thread.
  */
 task_ptr thread_pool::steal_task()
 {
    task_ptr stealed_task_ptr;
+
+   std::lock_guard<std::mutex> lock(list_mutex_);
 
    for (unsigned index = 0; (index < thread_list_.size()) && !stealed_task_ptr; index++)
    {
@@ -45,27 +41,11 @@ task_ptr thread_pool::steal_task()
  */
 void thread_pool::add_task(task_ptr new_task_ptr)
 {
-   // Go over other threads and look for someone who will take the task,
-   // starting with first thread that is marked as available for adding.
-   unsigned number = available_thread_number_;
+   thread_list_[available_thread_number_]->add_task(new_task_ptr);
 
-   do
-   {
-      bool result = thread_list_[number]->add_task(new_task_ptr);
-
-      number = (number == thread_list_.size()) ? 0
-                                               : number + 1;
-      if (result)
-      {
-         available_thread_number_ = number;
-         return;
-      }
-   }
-   while (available_thread_number_ != number);
-
-   // If all threads are busy, add task to first one with block until
-   // a queue of the thread will allow to put new task.
-   thread_list_[available_thread_number_]->add_task(new_task_ptr, true);
+   available_thread_number_ = (available_thread_number_ == thread_list_.size())
+                            ? 0
+                            : available_thread_number_ + 1;
 };
 
 /**
@@ -73,6 +53,7 @@ void thread_pool::add_task(task_ptr new_task_ptr)
  */
 bool thread_pool::change_size(unsigned new_size)
 {
+   std::lock_guard<std::mutex> lock(list_mutex_);
    unsigned old_size = thread_list_.size();
 
    if (new_size == 0)
@@ -87,7 +68,7 @@ bool thread_pool::change_size(unsigned new_size)
       // Add new threads.
       for (unsigned index = old_size; index < new_size; index++)
       {
-         thread_list_[index] = std::make_shared<thread>(task_queue_size_);
+         thread_list_[index] = std::make_shared<thread>();
       }
    }
    else if (new_size < old_size)
@@ -126,22 +107,6 @@ bool thread_pool::change_size(unsigned new_size)
 
          threads_to_delete.erase(threads_to_delete.begin());
       }
-   }
-   return true;
-};
-
-/**
- *  Set maximum amount of tasks per thread.
- */
-bool thread_pool::set_max_task_count(unsigned new_count)
-{
-   if (new_count == 0) return false;
-
-   task_queue_size_ = new_count;
-
-   for (unsigned index = 0; index < thread_list_.size(); index++)
-   {
-      thread_list_[index]->resize_queue(task_queue_size_);
    }
    return true;
 };

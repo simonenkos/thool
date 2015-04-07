@@ -18,25 +18,31 @@ unsigned long long simple_fibonnachi(unsigned n)
    return simple_fibonnachi(n - 2) + simple_fibonnachi(n - 1);
 };
 
-void calculate_simple_fibonachi()
+void calculate_simple_fibonachi(unsigned number)
 {
-   std::cout << simple_fibonnachi(10) << std::endl;
+   std::cout << number << " fibonacci number is: " << simple_fibonnachi(number) << std::endl;
 };
 
 int main(int argc, char ** argv)
 {
    auto & thread_pool = thool::thread_pool::instance();
-   auto fib_task_ptr = std::make_shared<thool::task>(&calculate_simple_fibonachi, 4);
 
-   thread_pool.add_task(fib_task_ptr);
-
-   while (true)
-   {
-      if (fib_task_ptr->is_completed())
-      {
-         break;
-      }
-   }
+   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 0),  0));
+   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 1),  0));
+   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 2),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 3),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 4),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 5),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 6),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 7),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 8),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 9),  0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 10), 0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 11), 0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 12), 0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 13), 0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 14), 0));
+//   thread_pool.add_task(std::make_shared<thool::task>(std::bind(calculate_simple_fibonachi, 15), 0));
 
    thread_pool.stop();
 

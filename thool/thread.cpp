@@ -13,8 +13,7 @@
 namespace thool
 {
 
-thread::thread(unsigned task_queue_size) : queue_(task_queue_size)
-                                         , thread_(&thread::run, this)
+thread::thread() : thread_(&thread::run, this)
 { };
 
 thread::~thread()
@@ -25,14 +24,9 @@ thread::~thread()
 /**
  * Method to add new task for the thread to process.
  */
-bool thread::add_task(const task_ptr & new_task_ptr, bool wait)
+void thread::add_task(const task_ptr & new_task_ptr)
 {
-   if (wait)
-   {
-      queue_.wait_and_push(new_task_ptr);
-      return true;
-   }
-   return queue_.try_push(new_task_ptr);
+   queue_.push(new_task_ptr);
 };
 
 /**
@@ -49,14 +43,6 @@ task_ptr thread::get_task()
 void thread::stop()
 {
    if (thread_.joinable()) thread_.join();
-};
-
-/**
- * Method to resize thread's task queue.
- */
-void thread::resize_queue(unsigned new_size)
-{
-   queue_.resize(new_size);
 };
 
 void thread::run()

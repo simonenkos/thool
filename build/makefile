@@ -1,4 +1,4 @@
-COMPILER := g++
+COMPILER := g++-4.9
 THOOL_ROOT := ../
 
 vpath %.cpp $(THOOL_ROOT)
@@ -26,7 +26,7 @@ thool_dirs:
 # Test constants
 
 THOOL_LIB_PATH := $(THOOL_ROOT)build
-THOOL_TEST_LIB := -lthool -Wl,--no-as-needed -lpthread
+THOOL_TEST_LIB := -lthool -lpthread
 
 THOOL_TEST_SRC_DIRS := test
 THOOL_TEST_OBJ_DIRS := $(addprefix obj/, $(THOOL_TEST_SRC_DIRS))
@@ -39,7 +39,7 @@ THOOL_TEST_OBJS := $(patsubst %.cpp, obj/%.o, $(THOOL_TEST_SRCS))
 # Test targets
 
 test: thool test_dirs $(THOOL_TEST_OBJS)
-	$(COMPILER) -o thool-test $(THOOL_TEST_OBJS) -L $(THOOL_LIB_PATH) $(THOOL_TEST_LIB)
+	$(COMPILER) $(THOOL_TEST_OBJS) -L $(THOOL_LIB_PATH) $(THOOL_TEST_LIB) -o thool-test
 	
 test_dirs:
 	mkdir -p $(THOOL_TEST_OBJ_DIRS)

@@ -24,9 +24,9 @@ class thread_pool
 
    typedef std::vector<thread_ptr> thread_list;
 
-   thread_list thread_list_;
-   unsigned available_thread_number_;
-   unsigned task_queue_size_;
+   thread_list thread_list_;          // List of threads at the pool.
+   unsigned available_thread_number_; // Number of selected thread for available to task adding.
+   std::mutex list_mutex_;            // Mutex to protect a task stealing mechanism from changes of a size of the thread list.
 
    thread_pool();
 
@@ -38,7 +38,7 @@ class thread_pool
 
    ~thread_pool();
 
-   /** Get free task from thread pool to process by another thread. */
+   /** Get free task from some thread to process by another thread. */
    task_ptr steal_task();
 
 public:
@@ -48,9 +48,6 @@ public:
 
    /** Change size of a threads at the thread pool. */
    bool change_size(unsigned new_size);
-
-   /** Set maximum amount of tasks per thread. */
-   bool set_max_task_count(unsigned new_count);
 
    /** Interrupt a work of the thread pool with waiting for all tasks to be finished. */
    void stop();

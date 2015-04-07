@@ -25,7 +25,7 @@ class thread
    std::thread thread_;   // Thread to process tasks at a separate thread.
 
 public:
-   thread(unsigned task_queue_size);
+   thread();
 
    thread(const thread &  other) = delete;
    thread(const thread && other) = delete;
@@ -36,16 +36,13 @@ public:
    ~thread();
 
    /** Method to add new task for the thread to process. */
-   bool add_task(const task_ptr & new_task_ptr, bool wait = false);
+   void add_task(const task_ptr & new_task_ptr);
 
    /** Method to get a task that waiting to be processed from the thread. */
    task_ptr get_task();
 
    /** Method to stop the thread. */
    void stop();
-
-   /** Method to resize thread's task queue. */
-   void resize_queue(unsigned new_size);
 
 private:
    void run();
