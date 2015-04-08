@@ -1,4 +1,4 @@
-COMPILER := g++-4.9
+COMPILER := g++
 THOOL_ROOT := ../
 
 vpath %.cpp $(THOOL_ROOT)
@@ -26,7 +26,7 @@ thool_dirs:
 # Test constants
 
 THOOL_LIB_PATH := $(THOOL_ROOT)build
-THOOL_TEST_LIB := -lthool -lpthread
+THOOL_TEST_LIB := -lthool -pthread
 
 THOOL_TEST_SRC_DIRS := test
 THOOL_TEST_OBJ_DIRS := $(addprefix obj/, $(THOOL_TEST_SRC_DIRS))

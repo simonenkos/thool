@@ -43,7 +43,7 @@ void thread_pool::add_task(task_ptr new_task_ptr)
 {
    thread_list_[available_thread_number_]->add_task(new_task_ptr);
 
-   available_thread_number_ = (available_thread_number_ == thread_list_.size())
+   available_thread_number_ = (available_thread_number_ == (thread_list_.size() - 1))
                             ? 0
                             : available_thread_number_ + 1;
 };
