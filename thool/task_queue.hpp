@@ -8,11 +8,11 @@
 #ifndef THOOL_TASK_QUEUE_HPP_
 #define THOOL_TASK_QUEUE_HPP_
 
-#include <thool/task.hpp>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 
+#include <thool/task.hpp>
 
 namespace thool
 {

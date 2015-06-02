@@ -24,6 +24,8 @@ class thread
    task_queue  queue_;    // Queue to store tasks for the thread according to their priority.
    std::thread thread_;   // Thread to process tasks at a separate thread.
 
+   std::atomic<bool> stop_flag_; // Flag to notify thread about stop request.
+
 public:
    thread();
 

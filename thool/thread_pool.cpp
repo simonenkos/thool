@@ -16,9 +16,7 @@ thread_pool::thread_pool() : available_thread_number_(0)
 };
 
 thread_pool::~thread_pool()
-{
-   stop();
-};
+{ };
 
 /**
  * Get free task from some thread to process by another thread.
@@ -116,10 +114,7 @@ bool thread_pool::change_size(unsigned new_size)
  */
 void thread_pool::stop()
 {
-   for (unsigned index = 0; index < thread_list_.size(); index++)
-   {
-      thread_list_[index]->stop();
-   }
+   for (auto & thread : thread_list_) thread->stop();
 };
 
 /**

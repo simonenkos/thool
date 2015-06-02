@@ -5,20 +5,18 @@
  *      Author: simonenkos
  */
 
-#include <iostream>
-
 #include <thool/thread_pool.hpp>
 #include <thool/thread.hpp>
 
 namespace thool
 {
 
-thread::thread() : thread_(&thread::run, this)
+thread::thread() : thread_(&thread::run, this), stop_flag_(false)
 { };
 
 thread::~thread()
 {
-   stop();
+   if (thread_.joinable()) thread_.join();
 };
 
 /**
@@ -42,19 +40,26 @@ task_ptr thread::get_task()
  */
 void thread::stop()
 {
-   if (thread_.joinable()) thread_.join();
+   stop_flag_ = true;
+   // Add a dummy task with the highest priority to bring the thread out of the waiting state.
+   queue_.push(std::make_shared<task>([]{}, std::numeric_limits<unsigned>::max()));
 };
 
 void thread::run()
 {
-   while (thread_.joinable())
+   // Wait for a first task.
+   task_ptr active_task_ptr = queue_.wait_and_pop();
+
+   while (!stop_flag_ || active_task_ptr)
    {
-      // Trying to steal task from another threads.
-      auto active_task_ptr = thread_pool::instance().steal_task();
-      // If there are no free tasks, trying to get task from thread's task queue.
+      // Trying to steal task from another thread.
+      if (!active_task_ptr) active_task_ptr = thread_pool::instance().steal_task();
+      // If there are no free tasks, start to waiting for a new task.
       if (!active_task_ptr) active_task_ptr = queue_.wait_and_pop();
       // Execute task.
       active_task_ptr->execute();
+      // Trying to get a new task simultaneously from thread's task queue.
+      active_task_ptr = queue_.try_pop();
    }
 };
 
