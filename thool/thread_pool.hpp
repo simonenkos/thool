@@ -15,8 +15,8 @@ namespace thool
 {
 
 /**
- * Thread pool organizes control of a group of threads, that process bunch of tasks.
- * This class is not thread-safe, so thread pool does not provide any synchronization.
+ * Thread pool organizes control of a group of threads,
+ * that process bunch of tasks.
  */
 class thread_pool
 {
@@ -26,7 +26,8 @@ class thread_pool
 
    thread_list thread_list_;          // List of threads at the pool.
    unsigned available_thread_number_; // Number of selected thread for available to task adding.
-   std::mutex list_mutex_;            // Mutex to protect a task stealing mechanism from changes of a size of the thread list.
+   std::mutex list_mutex_;            // Mutex to protect a task stealing mechanism from
+                                      // changes of a size of the thread list.
 
    thread_pool();
 

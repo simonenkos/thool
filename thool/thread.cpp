@@ -16,7 +16,7 @@ thread::thread() : thread_(&thread::run, this), stop_flag_(false)
 
 thread::~thread()
 {
-   if (thread_.joinable()) thread_.join();
+   stop();
 };
 
 /**
@@ -40,9 +40,14 @@ task_ptr thread::get_task()
  */
 void thread::stop()
 {
-   stop_flag_ = true;
-   // Add a dummy task with the highest priority to bring the thread out of the waiting state.
-   queue_.push(std::make_shared<task>([]{}, std::numeric_limits<unsigned>::max()));
+   if (!stop_flag_)
+   {
+      stop_flag_ = true;
+      // Add a dummy task with the highest priority to bring the thread out of the waiting state.
+      queue_.push(std::make_shared<task>([]{}, std::numeric_limits<unsigned>::max()));
+      // Append child thread to parent's one.
+      if (thread_.joinable()) thread_.join();
+   }
 };
 
 void thread::run()
@@ -57,7 +62,14 @@ void thread::run()
       // If there are no free tasks, start to waiting for a new task.
       if (!active_task_ptr) active_task_ptr = queue_.wait_and_pop();
       // Execute task.
-      active_task_ptr->execute();
+      try
+      {
+         active_task_ptr->execute();
+      }
+      catch (...)
+      {
+         // Ignore active task and continue to work.
+      }
       // Trying to get a new task simultaneously from thread's task queue.
       active_task_ptr = queue_.try_pop();
    }
